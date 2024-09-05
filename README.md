@@ -1,7 +1,7 @@
 # zegarbcd
-Binary clock for Windows tray. Displays time in BCD format. Work in progress. Current status: displays time (screenshot shows 22:58).
+Binary clock for Windows tray. Displays time in BCD format. Work in progress. Current status: displays time (screenshot shows 21:37).
 
-![image](https://github.com/user-attachments/assets/01f4e2c8-ec3f-4d26-a2b5-99e44c8c315d)
+![obraz](https://github.com/user-attachments/assets/61d69e4b-72e7-4e72-aab6-9102bcbdcec5)
 
 # Building
 Use Qt6 build system.
