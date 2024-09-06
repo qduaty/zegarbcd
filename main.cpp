@@ -3,19 +3,19 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QTimer>
+#include <iomanip>
+#include <sstream>
 
 QSystemTrayIcon* trayIcon;
 QIcon currentIcon;
 
-QIcon generateIconFromTime() {
+QIcon generateIconFromTime(struct tm * tm) {
     constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
     constexpr int gray = 64;
     paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
 
-    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    auto tm = std::localtime(&now);
     int digits[4];
     digits[0] = tm->tm_hour / 10;
     digits[1] = tm->tm_hour % 10;
@@ -55,10 +55,13 @@ int main(int argc, char *argv[])
     QTimer::connect(&timer, &QTimer::timeout, [&timer] {
         if(trayIcon)
         {
-            trayIcon->setIcon(generateIconFromTime());
-            trayIcon->show();
             auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
             auto tm = std::localtime(&now);
+            trayIcon->setIcon(generateIconFromTime(tm));
+            std::stringstream buffer;
+            buffer << std::put_time(tm, "%A %d %B %Y");
+            trayIcon->setToolTip(QString::fromLocal8Bit(buffer.str()));
+            trayIcon->show();
             if(tm->tm_sec > 0)
                 timer.setInterval((60 - tm->tm_sec) * 1000);
             else
