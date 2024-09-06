@@ -22,7 +22,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(zegarbcd
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        ../xml-engine/src/helpers.cc
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET zegarbcd APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

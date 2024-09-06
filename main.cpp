@@ -3,6 +3,8 @@
 #include <QMessageBox>
 #include <QPainter>
 #include <QTimer>
+#include <QSettings>
+#include <QMenu>
 #include <iomanip>
 #include <sstream>
 
@@ -39,6 +41,18 @@ QIcon generateIconFromTime(struct tm * tm) {
     return pix;
 }
 
+void registerForStartup() {
+    QSettings settingsRunOnStartup("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
+    settingsRunOnStartup.setValue(QApplication::applicationName(),
+                                  QCoreApplication::applicationFilePath().replace('/', "\\"));
+}
+
+void quitAndUnregister() {
+    QSettings settingsRunOnStartup("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
+    settingsRunOnStartup.remove(QApplication::applicationName());
+    QCoreApplication::instance()->quit();
+}
+
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
@@ -50,6 +64,13 @@ int main(int argc, char *argv[])
         return 1;
     }
     trayIcon = new QSystemTrayIcon(nullptr);
+    auto trayIconMenu = new QMenu(nullptr);
+    auto quitAction = new QAction(app.tr("&Uninstall"), nullptr);
+    app.connect(quitAction, &QAction::triggered, quitAndUnregister);
+
+    trayIconMenu->addAction(quitAction);
+    trayIcon->setContextMenu(trayIconMenu);
+
     QTimer timer;
     timer.setInterval(1000);
     QTimer::connect(&timer, &QTimer::timeout, [&timer] {
@@ -69,5 +90,6 @@ int main(int argc, char *argv[])
         }
     });
     timer.start();
+    registerForStartup();
     return app.exec();
 }
