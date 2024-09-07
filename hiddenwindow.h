@@ -18,12 +18,14 @@ private:
     void registerForStartup();
     void quitAndUnregister();
     void updateTrayIcon();
-    void set12HourMode(bool arg);
+    enum class mode {mode24Hours, mode12Hours, mode5Min};
+    void setMode(mode arg);
 
     QSystemTrayIcon* trayIcon;
     QTimer timer;
     QSettings settings, settingsRunOnStartup;
     std::function<QIcon (struct tm * tm)>iconGenerator;
+    QAction *mode24hourAction, *mode12hourAction, *mode5minAction;
 
 signals:
 };

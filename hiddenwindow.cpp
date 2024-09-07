@@ -1,6 +1,4 @@
 #include "hiddenwindow.h"
-#include <iomanip>
-#include <sstream>
 #include <windows.h>
 #include <wtsapi32.h>
 #include <boost/signals2/signal.hpp>
@@ -40,7 +38,7 @@ public:
     boost::signals2::signal<void()> event;
 };
 
-QIcon generate4x4IconFromTime(struct tm * tm) {
+QIcon generate24hourIconFromTime(struct tm * tm) {
     constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
@@ -70,7 +68,7 @@ QIcon generate4x4IconFromTime(struct tm * tm) {
     return pix;
 }
 
-QIcon generate3x4IconFromTime(struct tm * tm) {
+QIcon generate12hourIconFromTime(struct tm * tm) {
     constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
@@ -102,26 +100,71 @@ QIcon generate3x4IconFromTime(struct tm * tm) {
     return pix;
 }
 
+QIcon generate5minIconFromTime(struct tm * tm) {
+    constexpr size_t imageSize = 64;
+    QPixmap pix(imageSize, imageSize);
+    QPainter paint(&pix);
+    constexpr int gray = 64;
+    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+
+    int digits[4];
+    constexpr int sizes[4] = {2, 3, 2, 2};
+    digits[0] = (tm->tm_hour / 8);
+    digits[1] = (tm->tm_hour % 8);
+    digits[2] = tm->tm_min / 15;
+    digits[3] = (tm->tm_min % 15) / 5;
+
+    for(int x = 0; x < 4; x++) {
+        for(int y = 0; y < sizes[x]; y++)
+        {
+            constexpr int xsize = imageSize / 4;
+            int ysize = imageSize / sizes[x];
+            constexpr int xmargin = imageSize / 16;
+            constexpr int ymargin = imageSize / 8;
+            int xpos = x * xsize + xmargin;
+            int ypos = y * ysize + ymargin * 2 / sizes[x];
+            QColor color;
+            if((digits[x] >> (sizes[x] - 1 - y)) & 0x1)
+                color = QColor(255,255,255,255);
+            else
+                color = QColor(0,0,0,255);
+            paint.fillRect(xpos, ypos, xsize - xmargin, ysize - ymargin * 2 / sizes[x], color);
+        }
+    }
+
+    return pix;
+}
+
 HiddenWindow::HiddenWindow(QWidget *parent):
     QMainWindow{parent},
     settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat),
     settingsRunOnStartup("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat),
-    iconGenerator(generate4x4IconFromTime)
+    iconGenerator(generate24hourIconFromTime),
+    mode24hourAction(new QAction(tr("&24 hours"), this)),
+    mode12hourAction(new QAction(tr("&12 hours"), this)),
+    mode5minAction(new QAction(tr("&5 min (1/3 day, hour, quarter, 5 min)"), this))
 {
     trayIcon = new QSystemTrayIcon(this);
 
     auto trayIconMenu = new QMenu(this);
-    auto mode12hourAction = new QAction(tr("&12 hours"), this);
-    mode12hourAction->setCheckable(true);
+    bool mode24Hours = settings.value("mode24hours").toBool();
+    if(mode24Hours) setMode(mode::mode24Hours);
+    connect(mode24hourAction, &QAction::triggered, [this] {setMode(mode::mode24Hours);});
+
     bool mode12Hours = settings.value("mode12hours").toBool();
-    mode12hourAction->setChecked(mode12Hours);
-    set12HourMode(mode12Hours);
-    connect(mode12hourAction, &QAction::toggled, this, &HiddenWindow::set12HourMode);
+    if(mode12Hours) setMode(mode::mode12Hours);
+    connect(mode12hourAction, &QAction::triggered, [this]{setMode(mode::mode12Hours);});
+
+    bool mode5min = settings.value("mode5min").toBool();
+    if(mode5min) setMode(mode::mode5Min);
+    connect(mode5minAction, &QAction::triggered, [this]{setMode(mode::mode5Min);});
 
     auto quitAction = new QAction(tr("&Uninstall"), this);
     connect(quitAction, &QAction::triggered, this, &HiddenWindow::quitAndUnregister);
 
+    trayIconMenu->addAction(mode24hourAction);
     trayIconMenu->addAction(mode12hourAction);
+    trayIconMenu->addAction(mode5minAction);
     trayIconMenu->addAction(quitAction);
     trayIcon->setContextMenu(trayIconMenu);
     timer.setInterval(1000);
@@ -159,13 +202,21 @@ void HiddenWindow::updateTrayIcon() {
     }
 }
 
-void HiddenWindow::set12HourMode(bool arg)
+void HiddenWindow::setMode(mode arg)
 {
-    qDebug() << arg;
-    if(arg)
-        iconGenerator = generate3x4IconFromTime;
-    else
-        iconGenerator = generate4x4IconFromTime;
+    switch(arg) {
+    case mode::mode24Hours:
+        iconGenerator = generate24hourIconFromTime;
+        break;
+    case mode::mode12Hours:
+        iconGenerator = generate12hourIconFromTime;
+        break;
+    case mode::mode5Min:
+        iconGenerator = generate5minIconFromTime;
+        break;
+    }
     updateTrayIcon();
-    settings.setValue("mode12hours", arg);
+    settings.setValue("mode24hours", arg == mode::mode24Hours);
+    settings.setValue("mode12hours", arg == mode::mode12Hours);
+    settings.setValue("mode5min", arg == mode::mode5Min);
 }
