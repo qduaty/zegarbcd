@@ -9,7 +9,11 @@ Binary clock for Windows tray.
 ## Modes
 - 24-hour: hhmm
 - 12-hour: hmm
-- 5 min precision: 1/3 day, hour, quarter, 5-min
+- experimental 9-pixel with 5 min precision:
+
+![obraz](https://github.com/user-attachments/assets/5689735a-828f-4a89-8186-4c02f1e1f01d)
+
+The top row means hours since 1/3 day (7), the 3 columns below mean: 1/3 of day (1, hence 1*8+7=15), quarter (2, hence 30) and 5-min (0). The approximate hour is 15:30.
 ## Known bugs
 - leaves settings in registry after uninstall
 # Prerequisities
