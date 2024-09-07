@@ -17,11 +17,13 @@ private:
 
     void registerForStartup();
     void quitAndUnregister();
-    void updateTrayIcon();;
+    void updateTrayIcon();
+    void set12HourMode(bool arg);
 
     QSystemTrayIcon* trayIcon;
     QTimer timer;
-
+    QSettings settings, settingsRunOnStartup;
+    std::function<QIcon (struct tm * tm)>iconGenerator;
 
 signals:
 };
