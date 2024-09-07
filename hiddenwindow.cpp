@@ -78,7 +78,9 @@ QIcon generate3x4IconFromTime(struct tm * tm) {
     paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
 
     int digits[3];
-    digits[0] = tm->tm_hour % 12;
+    digits[0] = (tm->tm_hour % 12);
+    if(digits[0] == 0)
+        digits[0] = 12;
     digits[1] = tm->tm_min / 10;
     digits[2] = tm->tm_min % 10;
     for(int x = 0; x < 3; x++)
