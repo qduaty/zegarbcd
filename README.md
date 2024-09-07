@@ -21,8 +21,6 @@ The top row means hours since 1/3 day (7), the 3 columns below mean: 1/3 of day 
 
 ![obraz](https://github.com/user-attachments/assets/6c44a794-dbb2-451f-bd8d-5cd7948a0db9)
 
-## Known bugs
-- leaves settings in registry after uninstall
 # Prerequisities
 - boost (set the location in CmakeLists.txt)
 - Qt 6
