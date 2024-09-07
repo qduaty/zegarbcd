@@ -38,6 +38,9 @@ public:
     boost::signals2::signal<void()> event;
 };
 
+constexpr const char *actionTexts[] = {"&24 hours", "&12 hours", "&5 min (1/3 day, hour, quarter, 5 min)", "5 &min (horz hour, vert 1/3 day, quarter, 5 min)"};
+constexpr const char *settingNames[] = {"mode24hours", "mode12hours", "mode5min", "mode5minSquare"};
+
 QIcon generate24hourIconFromTime(struct tm * tm) {
     constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
@@ -135,36 +138,61 @@ QIcon generate5minIconFromTime(struct tm * tm) {
     return pix;
 }
 
+QIcon generate5min3x3IconFromTime(struct tm * tm) {
+    constexpr size_t imageSize = 64;
+    QPixmap pix(imageSize, imageSize);
+    QPainter paint(&pix);
+    constexpr int gray = 64;
+    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+
+    int digits[3];
+    digits[0] = tm->tm_hour / 8;
+    digits[1] = tm->tm_min / 15;
+    digits[2] = (tm->tm_min % 15) / 5;
+    auto hour = tm->tm_hour % 8;
+    digits[0] |= (hour & 0x01) << 2;
+    digits[1] |= (hour & 0x02) << 1;
+    digits[2] |= (hour & 0x04);
+
+    for(int x = 0; x < 3; x++)
+        for(int y = 0; y < 3; y++)
+        {
+            constexpr int xsize = imageSize / 3;
+            constexpr int ysize = imageSize / 3;
+            constexpr int margin = imageSize / 16;
+            int xpos = x * xsize + margin;
+            int ypos = y * ysize + margin;
+            QColor color;
+            if((digits[x] >> (2 - y)) & 0x1)
+                color = QColor(255,255,255,255);
+            else
+                color = QColor(0,0,0,255);
+            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
+        }
+
+    return pix;
+}
+
+std::function<QIcon (struct tm * tm)>iconGenerators[]{generate24hourIconFromTime, generate12hourIconFromTime, generate5minIconFromTime, generate5min3x3IconFromTime};
+
 HiddenWindow::HiddenWindow(QWidget *parent):
     QMainWindow{parent},
     settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat),
     settingsRunOnStartup("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat),
-    iconGenerator(generate24hourIconFromTime),
-    mode24hourAction(new QAction(tr("&24 hours"), this)),
-    mode12hourAction(new QAction(tr("&12 hours"), this)),
-    mode5minAction(new QAction(tr("&5 min (1/3 day, hour, quarter, 5 min)"), this))
+    trayIcon(new QSystemTrayIcon(this))
 {
-    trayIcon = new QSystemTrayIcon(this);
-
     auto trayIconMenu = new QMenu(this);
-    bool mode24Hours = settings.value("mode24hours").toBool();
-    if(mode24Hours) setMode(mode::mode24Hours);
-    connect(mode24hourAction, &QAction::triggered, [this] {setMode(mode::mode24Hours);});
 
-    bool mode12Hours = settings.value("mode12hours").toBool();
-    if(mode12Hours) setMode(mode::mode12Hours);
-    connect(mode12hourAction, &QAction::triggered, [this]{setMode(mode::mode12Hours);});
-
-    bool mode5min = settings.value("mode5min").toBool();
-    if(mode5min) setMode(mode::mode5Min);
-    connect(mode5minAction, &QAction::triggered, [this]{setMode(mode::mode5Min);});
+    for(int i = 0; i < std::size(settingNames); i++)
+    {
+        auto action = new QAction(actionTexts[i], this);
+        if(settings.value(settingNames[i]).toBool()) setMode(static_cast<mode>(i));
+        connect(action, &QAction::triggered, [this, i] {setMode(static_cast<mode>(i));});
+        trayIconMenu->addAction(action);
+    }
 
     auto quitAction = new QAction(tr("&Uninstall"), this);
     connect(quitAction, &QAction::triggered, this, &HiddenWindow::quitAndUnregister);
-
-    trayIconMenu->addAction(mode24hourAction);
-    trayIconMenu->addAction(mode12hourAction);
-    trayIconMenu->addAction(mode5minAction);
     trayIconMenu->addAction(quitAction);
     trayIcon->setContextMenu(trayIconMenu);
     timer.setInterval(1000);
@@ -184,6 +212,7 @@ void HiddenWindow::registerForStartup() {
 
 void HiddenWindow::quitAndUnregister() {
     settingsRunOnStartup.remove(QApplication::applicationName());
+    settings.clear();
     QCoreApplication::instance()->quit();
 }
 
@@ -192,7 +221,7 @@ void HiddenWindow::updateTrayIcon() {
     {
         auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         auto tm = std::localtime(&now);
-        trayIcon->setIcon(iconGenerator(tm));
+        trayIcon->setIcon(iconGenerators[static_cast<int>(currentMode)](tm));
         trayIcon->setToolTip(QLocale().toString(QDate::currentDate(), "dddd d MMMM yyyy"));
         trayIcon->show();
         if(tm->tm_sec > 0)
@@ -204,19 +233,8 @@ void HiddenWindow::updateTrayIcon() {
 
 void HiddenWindow::setMode(mode arg)
 {
-    switch(arg) {
-    case mode::mode24Hours:
-        iconGenerator = generate24hourIconFromTime;
-        break;
-    case mode::mode12Hours:
-        iconGenerator = generate12hourIconFromTime;
-        break;
-    case mode::mode5Min:
-        iconGenerator = generate5minIconFromTime;
-        break;
-    }
+    currentMode = arg;
+    for(int i = 0; i < std::size(settingNames); i++)
+        settings.setValue(settingNames[i], i == static_cast<int>(arg));
     updateTrayIcon();
-    settings.setValue("mode24hours", arg == mode::mode24Hours);
-    settings.setValue("mode12hours", arg == mode::mode12Hours);
-    settings.setValue("mode5min", arg == mode::mode5Min);
 }
