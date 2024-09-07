@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(zegarbcd VERSION 0.1 LANGUAGES CXX)
+set(BOOST_ROOT "c:/boost_1_86_0")
+find_package(Boost)
+include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -22,6 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(zegarbcd
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        hiddenwindow.h hiddenwindow.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
@@ -43,6 +47,7 @@ else()
 endif()
 
 target_link_libraries(zegarbcd PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(zegarbcd PRIVATE wtsapi32)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
