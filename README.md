@@ -7,5 +7,6 @@ Binary clock for Windows tray.
 
 ![obraz](https://github.com/user-attachments/assets/61d69e4b-72e7-4e72-aab6-9102bcbdcec5)
 
-# Building
-Use Qt6 build system.
+# Prerequisities
+- boost (set the location in CmakeLists.txt)
+- Qt 6
