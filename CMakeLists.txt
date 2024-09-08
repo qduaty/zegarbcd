@@ -25,7 +25,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(zegarbcd
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        hiddenwindow.h hiddenwindow.cpp
+        mainwindow.ui
+        hiddenwindow.cpp
+        hiddenwindow.h
+
+
 
     )
 # Define target properties for Android with Qt 6 as:

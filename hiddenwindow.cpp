@@ -1,4 +1,5 @@
 #include "hiddenwindow.h"
+#include "ui_mainwindow.h"
 #include <windows.h>
 #include <wtsapi32.h>
 #include <boost/signals2/signal.hpp>
@@ -160,10 +161,12 @@ constexpr const char *settingNames[] = {"mode24hours", "mode12hours", "mode5min"
 
 HiddenWindow::HiddenWindow(QWidget *parent):
     QMainWindow{parent},
+    ui(new Ui::MainWindow),
     settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat),
     settingsRunOnStartup("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat),
     trayIcon(new QSystemTrayIcon(this))
 {
+    ui->setupUi(this);
     auto trayIconMenu = new QMenu(this);
 
     for(int i = 0; i < std::size(settingNames); i++)
@@ -185,6 +188,7 @@ HiddenWindow::HiddenWindow(QWidget *parent):
     auto myEvenfilter = new MyEventFilter;
     myEvenfilter->event.connect(std::bind(&HiddenWindow::updateTrayIcon, this));
     QApplication::instance()->installNativeEventFilter(myEvenfilter);
+    connect(trayIcon, &QSystemTrayIcon::activated, this, &HiddenWindow::iconActivated);
     registerForStartup();
 }
 
@@ -220,4 +224,34 @@ void HiddenWindow::setMode(mode arg)
     for(int i = 0; i < std::size(settingNames); i++)
         settings.setValue(settingNames[i], i == static_cast<int>(arg));
     updateTrayIcon();
+}
+
+void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    switch(reason)
+    {
+    case QSystemTrayIcon::DoubleClick: // left click
+    {
+        auto iconGeometry = trayIcon->geometry();
+        auto w = geometry().width();
+        auto h = geometry().height();
+        auto x = iconGeometry.x() + iconGeometry.width() / 2 - w / 2;
+        auto y = iconGeometry.y() - h;
+
+        setGeometry(x, y, w, h);
+
+        if(isHidden())
+        {
+            show();
+        }
+        else
+        {
+            hide();
+        }
+    }
+    break;
+    default:
+    break;
+    }
+
 }
