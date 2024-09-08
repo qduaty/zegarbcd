@@ -38,15 +38,17 @@ public:
     boost::signals2::signal<void()> event;
 };
 
-constexpr const char *actionTexts[] = {"&24 hours", "&12 hours", "&5 min (1/3 day, hour, quarter, 5 min)", "5 &min (horz hour, vert 1/3 day, quarter, 5 min)"};
-constexpr const char *settingNames[] = {"mode24hours", "mode12hours", "mode5min", "mode5minSquare"};
+constexpr size_t imageSize = 64;
+
+constexpr int gray = 72;
+constexpr QColor gridColor(gray,gray,gray,255);
+constexpr QColor onColor(255,255,255,255);
+constexpr QColor offColor(0,0,0,255);
 
 QIcon generate24hourIconFromTime(struct tm * tm) {
-    constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
-    constexpr int gray = 64;
-    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
 
     int digits[4];
     digits[0] = tm->tm_hour / 10;
@@ -60,23 +62,18 @@ QIcon generate24hourIconFromTime(struct tm * tm) {
             constexpr int margin = imageSize / 16;
             int xpos = x * size + margin;
             int ypos = y * size + margin;
-            QColor color;
-            if((digits[x] >> (3 - y)) & 0x1)
-                color = QColor(255,255,255,255);
-            else
-                color = QColor(0,0,0,255);
+            QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, size - margin, size - margin, color);
         }
 
     return pix;
 }
 
+
 QIcon generate12hourIconFromTime(struct tm * tm) {
-    constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
-    constexpr int gray = 64;
-    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
 
     int digits[3];
     digits[0] = (tm->tm_hour % 12);
@@ -92,11 +89,7 @@ QIcon generate12hourIconFromTime(struct tm * tm) {
             constexpr int margin = imageSize / 16;
             int xpos = x * xsize + margin;
             int ypos = y * ysize + margin;
-            QColor color;
-            if((digits[x] >> (3 - y)) & 0x1)
-                color = QColor(255,255,255,255);
-            else
-                color = QColor(0,0,0,255);
+            QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
         }
 
@@ -104,11 +97,9 @@ QIcon generate12hourIconFromTime(struct tm * tm) {
 }
 
 QIcon generate5minIconFromTime(struct tm * tm) {
-    constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
-    constexpr int gray = 64;
-    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
 
     int digits[4];
     constexpr int sizes[4] = {2, 3, 2, 2};
@@ -126,11 +117,7 @@ QIcon generate5minIconFromTime(struct tm * tm) {
             constexpr int ymargin = imageSize / 8;
             int xpos = x * xsize + xmargin;
             int ypos = y * ysize + ymargin * 2 / sizes[x];
-            QColor color;
-            if((digits[x] >> (sizes[x] - 1 - y)) & 0x1)
-                color = QColor(255,255,255,255);
-            else
-                color = QColor(0,0,0,255);
+            QColor color = (digits[x] >> (sizes[x] - 1 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - xmargin, ysize - ymargin * 2 / sizes[x], color);
         }
     }
@@ -139,11 +126,9 @@ QIcon generate5minIconFromTime(struct tm * tm) {
 }
 
 QIcon generate5min3x3IconFromTime(struct tm * tm) {
-    constexpr size_t imageSize = 64;
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
-    constexpr int gray = 64;
-    paint.fillRect(0, 0, imageSize, imageSize, QColor(gray,gray,gray,255));
+    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
 
     int digits[3];
     digits[0] = tm->tm_hour / 8;
@@ -162,11 +147,7 @@ QIcon generate5min3x3IconFromTime(struct tm * tm) {
             constexpr int margin = imageSize / 16;
             int xpos = x * xsize + margin;
             int ypos = y * ysize + margin;
-            QColor color;
-            if((digits[x] >> (2 - y)) & 0x1)
-                color = QColor(255,255,255,255);
-            else
-                color = QColor(0,0,0,255);
+            QColor color = (digits[x] >> (2 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
         }
 
@@ -174,6 +155,8 @@ QIcon generate5min3x3IconFromTime(struct tm * tm) {
 }
 
 std::function<QIcon (struct tm * tm)>iconGenerators[]{generate24hourIconFromTime, generate12hourIconFromTime, generate5minIconFromTime, generate5min3x3IconFromTime};
+constexpr const char *actionTexts[] = {"&24 hours", "&12 hours", "&5 min (1/3 day, hour, quarter, 5 min)", "5 &min (horz hour, vert 1/3 day, quarter, 5 min)"};
+constexpr const char *settingNames[] = {"mode24hours", "mode12hours", "mode5min", "mode5minSquare"};
 
 HiddenWindow::HiddenWindow(QWidget *parent):
     QMainWindow{parent},
