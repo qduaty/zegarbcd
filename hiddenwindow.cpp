@@ -49,8 +49,8 @@ QIcon generate24hourIconFromTime(struct tm * tm) {
         {
             constexpr int size = imageSize / 4;
             constexpr int margin = imageSize / 16;
-            int xpos = x * size + margin;
-            int ypos = y * size + margin;
+            int xpos = x * size + margin / 2;
+            int ypos = y * size + margin / 2;
             QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, size - margin, size - margin, color);
         }
@@ -76,8 +76,8 @@ QIcon generate12hourIconFromTime(struct tm * tm) {
             constexpr int xsize = imageSize / 3;
             constexpr int ysize = imageSize / 4;
             constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin;
-            int ypos = y * ysize + margin;
+            int xpos = x * xsize + margin / 2;
+            int ypos = y * ysize + margin / 2;
             QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
         }
@@ -104,8 +104,8 @@ QIcon generate5minIconFromTime(struct tm * tm) {
             int ysize = imageSize / sizes[x];
             constexpr int xmargin = imageSize / 16;
             constexpr int ymargin = imageSize / 8;
-            int xpos = x * xsize + xmargin;
-            int ypos = y * ysize + ymargin * 2 / sizes[x];
+            int xpos = x * xsize + xmargin / 2;
+            int ypos = y * ysize + ymargin / sizes[x];
             QColor color = (digits[x] >> (sizes[x] - 1 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - xmargin, ysize - ymargin * 2 / sizes[x], color);
         }
@@ -134,8 +134,8 @@ QIcon generate5min3x3IconFromTime(struct tm * tm) {
             constexpr int xsize = imageSize / 3;
             constexpr int ysize = imageSize / 3;
             constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin;
-            int ypos = y * ysize + margin;
+            int xpos = x * xsize + margin / 2;
+            int ypos = y * ysize + margin / 2;
             QColor color = (digits[x] >> (2 - y)) & 0x1 ? onColor : offColor;
             paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
         }
