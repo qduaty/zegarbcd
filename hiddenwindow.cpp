@@ -13,25 +13,13 @@ public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr *) Q_DECL_OVERRIDE {
         MSG* msg = static_cast< MSG* >( message );
         // TODO left this code in case the clock needs a nudge also after system wake-up - remove if not needed
-        // if (msg->message == WM_POWERBROADCAST) {
-        //     switch (msg->wParam) {
-        //     case PBT_APMPOWERSTATUSCHANGE:
-        //         qDebug() << ("PBT_APMPOWERSTATUSCHANGE  received\n");
-        //         break;
-        //     case PBT_APMRESUMEAUTOMATIC:
-        //         qDebug() << ("PBT_APMRESUMEAUTOMATIC  received\n");
-        //         break;
-        //     case PBT_APMRESUMESUSPEND:
-        //         qDebug() << ("PBT_APMRESUMESUSPEND  received\n");
-        //         break;
-        //     case PBT_APMSUSPEND:
-        //         qDebug() << ("PBT_APMSUSPEND  received\n");
-        //         break;
-        //     }
-        // }
-        // else
-        if (msg->message == WM_WTSSESSION_CHANGE)
+        if (msg->message == WM_POWERBROADCAST) {
+            qDebug() << "WM_POWERBROADCAST:" << msg->wParam;
+            event();
+        }
+        else if (msg->message == WM_WTSSESSION_CHANGE)
         {
+            qDebug() << "WM_WTSSESSION_CHANGE:" << msg->wParam;
             event();
         }
         return false;
@@ -184,7 +172,8 @@ HiddenWindow::HiddenWindow(QWidget *parent):
     timer.setInterval(1000);
     connect(&timer, &QTimer::timeout, this, &HiddenWindow::updateTrayIcon);
     timer.start();
-    WTSRegisterSessionNotification(reinterpret_cast<HWND>(winId()), NOTIFY_FOR_ALL_SESSIONS);
+    WTSRegisterSessionNotification(reinterpret_cast<HWND>(winId()), NOTIFY_FOR_THIS_SESSION);
+    RegisterSuspendResumeNotification(reinterpret_cast<HWND>(winId()), DEVICE_NOTIFY_WINDOW_HANDLE);
     auto myEvenfilter = new MyEventFilter;
     myEvenfilter->event.connect(std::bind(&HiddenWindow::updateTrayIcon, this));
     QApplication::instance()->installNativeEventFilter(myEvenfilter);
