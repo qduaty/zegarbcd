@@ -11,7 +11,7 @@
 class SessionEventFilter : public QAbstractNativeEventFilter {
 public:
     bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr *) Q_DECL_OVERRIDE {
-        MSG* msg = static_cast< MSG* >( message );
+        auto msg = static_cast<MSG*>(message);
         // TODO left this code in case the clock needs a nudge also after system wake-up - remove if not needed
         if (msg->message == WM_POWERBROADCAST) {
             qDebug() << "WM_POWERBROADCAST:" << msg->wParam;
@@ -34,114 +34,63 @@ constexpr QColor gridColor(gray,gray,gray,255);
 constexpr QColor onColor(255,255,255,255);
 constexpr QColor offColor(0,0,0,255);
 
-QIcon generate24hourIconFromTime(struct tm * tm) {
+QIcon generateIcon(int* digits, QSize dataSize)
+{
     QPixmap pix(imageSize, imageSize);
     QPainter paint(&pix);
     paint.fillRect(0, 0, imageSize, imageSize, gridColor);
+    for(int x = 0; x < dataSize.width(); x++)
+        for(int y = 0; y < dataSize.height(); y++)
+        {
+            const int xsize = imageSize / dataSize.width();
+            const int ysize = imageSize / dataSize.height();
+            constexpr int margin = imageSize / 16;
+            int xpos = x * xsize + margin / 2;
+            int ypos = y * ysize + margin / 2;
+            QColor color = (digits[x] >> (dataSize.height() - 1 - y)) & 0x1 ? onColor : offColor;
+            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
+        }
+
+    return pix;
+}
+
+QIcon generate24hourIconFromTime(struct tm * tm) {
 
     int digits[4];
     digits[0] = tm->tm_hour / 10;
     digits[1] = tm->tm_hour % 10;
     digits[2] = tm->tm_min / 10;
     digits[3] = tm->tm_min % 10;
-    for(int x = 0; x < 4; x++)
-        for(int y = 0; y < 4; y++)
-        {
-            constexpr int size = imageSize / 4;
-            constexpr int margin = imageSize / 16;
-            int xpos = x * size + margin / 2;
-            int ypos = y * size + margin / 2;
-            QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
-            paint.fillRect(xpos, ypos, size - margin, size - margin, color);
-        }
-
-    return pix;
+    return generateIcon(digits, {4, 4});
 }
 
-
 QIcon generate12hourIconFromTime(struct tm * tm) {
-    QPixmap pix(imageSize, imageSize);
-    QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
-
     int digits[3];
     digits[0] = (tm->tm_hour % 12);
     if(digits[0] == 0)
         digits[0] = 12;
     digits[1] = tm->tm_min / 10;
     digits[2] = tm->tm_min % 10;
-    for(int x = 0; x < 3; x++)
-        for(int y = 0; y < 4; y++)
-        {
-            constexpr int xsize = imageSize / 3;
-            constexpr int ysize = imageSize / 4;
-            constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin / 2;
-            int ypos = y * ysize + margin / 2;
-            QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
-            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
-        }
-
-    return pix;
+    return generateIcon(digits, {3, 4});
 }
 
 /// weekday (1-7); monthday (vert + top to right, 1-31); month (bottom right square, 1-12)
 QIcon generate3x4IconFromDate(struct tm * tm) {
-    QPixmap pix(imageSize, imageSize);
-    QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
-
     int digits[4];
     digits[0] = (tm->tm_wday);
     digits[1] = tm->tm_mday & 0b111;
     digits[2] = (tm->tm_mon + 1) & 0b11 | (tm->tm_mday >> 1) & 0b100;
     digits[3] = ((tm->tm_mon + 1) >> 2) | (tm->tm_mday >> 2) & 0b100;
-    // qDebug() << tm->tm_wday;
-    // qDebug() << tm->tm_mday;
-    // qDebug() << tm->tm_mon+ 1;
-    // for(int i=0; i < 4; i++)qDebug() << digits[i];
-    for(int x = 0; x < 4; x++)
-        for(int y = 0; y < 3; y++)
-        {
-            constexpr int xsize = imageSize / 4;
-            constexpr int ysize = imageSize / 3;
-            constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin / 2;
-            int ypos = y * ysize + margin / 2;
-            QColor color = (digits[x] >> (2 - y)) & 0x1 ? onColor : offColor;
-            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
-        }
-
-    return pix;
+    return generateIcon(digits, {4, 3});
 }
 
 /// weekday (top row: 1-7); monthday (vert + top to right, 1-31); month (bottom right square, 1-12)
 QIcon generate4x3IconFromDate(struct tm * tm) {
-    QPixmap pix(imageSize, imageSize);
-    QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
-
     int digits[3];
     digits[0] = tm->tm_mday & 0b111 | ((tm->tm_wday & 0b1) << 3);
     digits[1] = (tm->tm_mon + 1) & 0b11 | (tm->tm_mday >> 1) & 0b100 | ((tm->tm_wday & 0b10) << 2);
     digits[2] = ((tm->tm_mon + 1) >> 2) | (tm->tm_mday >> 2) & 0b100 | ((tm->tm_wday & 0b100) << 1);
-    // qDebug() << tm->tm_wday;
-    // qDebug() << tm->tm_mday;
-    // qDebug() << tm->tm_mon+ 1;
-    // for(int i=0; i < 4; i++)qDebug() << digits[i];
-    for(int x = 0; x < 3; x++)
-        for(int y = 0; y < 4; y++)
-        {
-            constexpr int xsize = imageSize / 3;
-            constexpr int ysize = imageSize / 4;
-            constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin / 2;
-            int ypos = y * ysize + margin / 2;
-            QColor color = (digits[x] >> (3 - y)) & 0x1 ? onColor : offColor;
-            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
-        }
-
-    return pix;
+    return generateIcon(digits, {3, 4});
 }
 
 QIcon generate5minIconFromTime(struct tm * tm) {
@@ -174,32 +123,12 @@ QIcon generate5minIconFromTime(struct tm * tm) {
 }
 
 QIcon generate5min3x3IconFromTime(struct tm * tm) {
-    QPixmap pix(imageSize, imageSize);
-    QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
-
     int digits[3];
-    digits[0] = tm->tm_hour / 8;
-    digits[1] = tm->tm_min / 15;
-    digits[2] = (tm->tm_min % 15) / 5;
     auto hour = tm->tm_hour % 8;
-    digits[0] |= (hour & 0x01) << 2;
-    digits[1] |= (hour & 0x02) << 1;
-    digits[2] |= (hour & 0x04);
-
-    for(int x = 0; x < 3; x++)
-        for(int y = 0; y < 3; y++)
-        {
-            constexpr int xsize = imageSize / 3;
-            constexpr int ysize = imageSize / 3;
-            constexpr int margin = imageSize / 16;
-            int xpos = x * xsize + margin / 2;
-            int ypos = y * ysize + margin / 2;
-            QColor color = (digits[x] >> (2 - y)) & 0x1 ? onColor : offColor;
-            paint.fillRect(xpos, ypos, xsize - margin, ysize - margin, color);
-        }
-
-    return pix;
+    digits[0] = tm->tm_hour / 8 | (hour & 0b1) << 2;
+    digits[1] = tm->tm_min / 15 | (hour & 0b10) << 1;
+    digits[2] = (tm->tm_min % 15) / 5 | (hour & 0b100);
+    return generateIcon(digits, {3, 3});
 }
 
 std::function<QIcon (struct tm * tm)>iconGenerators[]{generate24hourIconFromTime, generate12hourIconFromTime, generate5minIconFromTime, generate5min3x3IconFromTime};
@@ -293,29 +222,16 @@ void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
         setGeometry(x, y, w, h);
 
         if(isHidden())
-        {
             show();
-        }
         else
-        {
             hide();
-        }
     }
     break;
     case QSystemTrayIcon::Trigger:
-        if(displayDate)
-        {
-            displayDate = false;
-            updateTrayIcon();
-        }
-        else
-        {
-            displayDate = true;
-            updateTrayIcon();
-        }
+        displayDate = !displayDate;
+        updateTrayIcon();
         break;
     default:
     break;
     }
-
 }
