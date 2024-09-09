@@ -24,6 +24,7 @@ private:
     void updateTrayIcon();
     enum class mode: int {mode24Hours, mode12Hours, mode5Min, mode5MinSquare};
     mode currentMode = mode::mode24Hours;
+    bool displayDate = false;
     void setMode(mode arg);
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
 
