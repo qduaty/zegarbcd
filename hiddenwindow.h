@@ -27,7 +27,9 @@ private:
     bool displayDate = false;
     void setMode(mode arg);
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
-
+    void saveSettings();
+    void loadSettings();
+    void hideEvent(QHideEvent *event) override;
     QSystemTrayIcon* trayIcon;
     QTimer timer;
     QSettings settings, settingsRunOnStartup;

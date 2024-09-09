@@ -7,6 +7,11 @@
 #include <QMenu>
 #include <QPainter>
 #include <QDate>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QLineEdit>
+#include <QSlider>
+#include <QWindow>
 
 class SessionEventFilter : public QAbstractNativeEventFilter {
 public:
@@ -145,6 +150,7 @@ HiddenWindow::HiddenWindow(QWidget *parent):
     trayIcon(new QSystemTrayIcon(this))
 {
     ui->setupUi(this);
+    loadSettings();
     auto trayIconMenu = new QMenu(this);
 
     for(int i = 0; i < std::size(settingNames); i++)
@@ -237,4 +243,60 @@ void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
     default:
     break;
     }
+}
+
+void HiddenWindow::saveSettings()
+{
+    QSettings settings;
+    settings.beginGroup("Preferences");
+    for(auto child: findChildren<QCheckBox*>())
+        settings.setValue(child->objectName(), child->isChecked());
+    for(auto child: findChildren<QRadioButton*>())
+        settings.setValue(child->objectName(), child->isChecked());
+    for(auto child: findChildren<QLineEdit*>())
+        settings.setValue(child->objectName(), child->text());
+    for(auto child: findChildren<QSlider*>())
+        settings.setValue(child->objectName(), child->value());
+    for(auto child: findChildren<QSpinBox*>())
+        settings.setValue(child->objectName(), child->value());
+    for(auto child: findChildren<QDoubleSpinBox*>())
+        settings.setValue(child->objectName(), child->value());
+    for(auto child: findChildren<QTabWidget*>())
+        settings.setValue(child->objectName(), child->currentIndex());
+    settings.endGroup();
+}
+
+void HiddenWindow::loadSettings()
+{
+    settings.beginGroup("Preferences");
+    if(settings.value("first_time", true).toBool())
+    {
+        saveSettings();
+        settings.setValue("first_time", false);
+    }
+    else
+    {
+        for(auto child: findChildren<QCheckBox*>())
+            child->setChecked(settings.value(child->objectName(), false).toBool());
+        for(auto child: findChildren<QRadioButton*>())
+            child->setChecked(settings.value(child->objectName(), false).toBool());
+        for(auto child: findChildren<QLineEdit*>())
+            child->setText(settings.value(child->objectName(), "").toString());
+        for(auto child: findChildren<QSlider*>())
+            child->setValue(settings.value(child->objectName(), 0).toInt());
+        for(auto child: findChildren<QSpinBox*>())
+            child->setValue(settings.value(child->objectName(), 0).toInt());
+        for(auto child: findChildren<QDoubleSpinBox*>())
+            child->setValue(settings.value(child->objectName(), 0).toDouble());
+        for(auto child: findChildren<QTabWidget*>())
+            child->setCurrentIndex(settings.value(child->objectName(), 0).toInt());
+    }
+    settings.endGroup();
+}
+
+void HiddenWindow::hideEvent(QHideEvent *event)
+{
+    qDebug() << __func__;
+    saveSettings();
+    QMainWindow::hideEvent(event);
 }
