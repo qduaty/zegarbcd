@@ -15,16 +15,18 @@ public:
         // TODO left this code in case the clock needs a nudge also after system wake-up - remove if not needed
         if (msg->message == WM_POWERBROADCAST) {
             qDebug() << "WM_POWERBROADCAST:" << msg->wParam;
-            event();
+            if(msg->wParam == PBT_APMRESUMEAUTOMATIC)
+                event("WM_POWERBROADCAST");
         }
         else if (msg->message == WM_WTSSESSION_CHANGE)
         {
-            qDebug() << "WM_WTSSESSION_CHANGE:" << msg->wParam;
-            event();
+            // qDebug() << "WM_WTSSESSION_CHANGE:" << msg->wParam << ' ' << msg->lParam;
+            if(msg->wParam == WTS_SESSION_UNLOCK)
+                event("WM_WTSSESSION_CHANGE");
         }
         return false;
     }
-    boost::signals2::signal<void()> event;
+    boost::signals2::signal<void(QString)> event;
 };
 
 constexpr size_t imageSize = 64;
@@ -158,12 +160,12 @@ HiddenWindow::HiddenWindow(QWidget *parent):
     trayIconMenu->addAction(quitAction);
     trayIcon->setContextMenu(trayIconMenu);
     timer.setInterval(1000);
-    connect(&timer, &QTimer::timeout, this, &HiddenWindow::updateTrayIcon);
+    connect(&timer, &QTimer::timeout, [this]{updateTrayIcon("timeout");});
     timer.start();
     WTSRegisterSessionNotification(reinterpret_cast<HWND>(winId()), NOTIFY_FOR_THIS_SESSION);
     RegisterSuspendResumeNotification(reinterpret_cast<HWND>(winId()), DEVICE_NOTIFY_WINDOW_HANDLE);
     auto myEvenfilter = new SessionEventFilter;
-    myEvenfilter->event.connect(std::bind(&HiddenWindow::updateTrayIcon, this));
+    myEvenfilter->event.connect([this](QString arg){updateTrayIcon(arg);});
     QApplication::instance()->installNativeEventFilter(myEvenfilter);
     connect(trayIcon, &QSystemTrayIcon::activated, this, &HiddenWindow::iconActivated);
     registerForStartup();
@@ -180,11 +182,12 @@ void HiddenWindow::quitAndUnregister() {
     QCoreApplication::instance()->quit();
 }
 
-void HiddenWindow::updateTrayIcon() {
+void HiddenWindow::updateTrayIcon(QString reason) {
     if(trayIcon)
     {
         auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         auto tm = std::localtime(&now);
+        qDebug() << tm->tm_hour << tm->tm_min << tm->tm_sec << "updating icon: " << reason;
         auto iconGenerator = displayDate ? generate4x3IconFromDate : iconGenerators[static_cast<int>(currentMode)];
         trayIcon->setIcon(iconGenerator(tm));
         trayIcon->setToolTip(QLocale().toString(QDate::currentDate(), "dddd d MMMM yyyy"));
@@ -204,7 +207,7 @@ void HiddenWindow::setMode(mode arg)
     currentMode = arg;
     for(int i = 0; i < std::size(settingNames); i++)
         settings.setValue(settingNames[i], i == static_cast<int>(arg));
-    updateTrayIcon();
+    updateTrayIcon(__func__);
 }
 
 void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
@@ -229,7 +232,7 @@ void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
     break;
     case QSystemTrayIcon::Trigger:
         displayDate = !displayDate;
-        updateTrayIcon();
+        updateTrayIcon("date");
         break;
     default:
     break;

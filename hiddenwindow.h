@@ -21,7 +21,7 @@ private:
     Ui::MainWindow *ui;
     void registerForStartup();
     void quitAndUnregister();
-    void updateTrayIcon();
+    void updateTrayIcon(QString reason);
     enum class mode: int {mode24Hours, mode12Hours, mode5Min, mode5MinSquare};
     mode currentMode = mode::mode24Hours;
     bool displayDate = false;
