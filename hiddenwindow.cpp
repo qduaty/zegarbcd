@@ -247,14 +247,15 @@ void HiddenWindow::iconActivated(QSystemTrayIcon::ActivationReason reason)
 
 void HiddenWindow::saveSettings()
 {
-    QSettings settings;
     settings.beginGroup("Preferences");
+
     for(auto child: findChildren<QCheckBox*>())
         settings.setValue(child->objectName(), child->isChecked());
     for(auto child: findChildren<QRadioButton*>())
         settings.setValue(child->objectName(), child->isChecked());
     for(auto child: findChildren<QLineEdit*>())
-        settings.setValue(child->objectName(), child->text());
+        if(!dynamic_cast<QSpinBox*>(child->parent()) && !dynamic_cast<QDoubleSpinBox*>(child->parent()))
+            settings.setValue(child->objectName(), child->text());
     for(auto child: findChildren<QSlider*>())
         settings.setValue(child->objectName(), child->value());
     for(auto child: findChildren<QSpinBox*>())
@@ -281,7 +282,8 @@ void HiddenWindow::loadSettings()
         for(auto child: findChildren<QRadioButton*>())
             child->setChecked(settings.value(child->objectName(), false).toBool());
         for(auto child: findChildren<QLineEdit*>())
-            child->setText(settings.value(child->objectName(), "").toString());
+            if(!dynamic_cast<QSpinBox*>(child->parent()) && !dynamic_cast<QDoubleSpinBox*>(child->parent()))
+                child->setText(settings.value(child->objectName(), "").toString());
         for(auto child: findChildren<QSlider*>())
             child->setValue(settings.value(child->objectName(), 0).toInt());
         for(auto child: findChildren<QSpinBox*>())
