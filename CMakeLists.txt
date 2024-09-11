@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(zegarbcd VERSION 0.1 LANGUAGES CXX)
 set(BOOST_ROOT "c:/boost_1_86_0")
 find_package(Boost)
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR})
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         mainwindow.ui
         hiddenwindow.cpp
         hiddenwindow.h
+        colortoolbutton.h colortoolbutton.cpp
 
 
 

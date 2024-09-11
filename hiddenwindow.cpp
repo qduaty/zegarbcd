@@ -36,22 +36,23 @@ public:
 
 constexpr size_t imageSize = 64;
 
-constexpr int gray = 72;
-constexpr QColor gridColor(gray,gray,gray,255);
-constexpr QColor onColor(255,255,255,255);
-constexpr QColor offColor(0,0,0,255);
-
 QIcon generateIcon(int* digits, QSize dataSize)
 {
-    QPixmap pix(imageSize, imageSize);
+    QSettings settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat);
+    settings.beginGroup("Preferences");
+    auto gridColor = ColorToolButton::colorFromInt(settings.value("pixelColorBackground", 0x505050).toInt());
+    auto onColor = ColorToolButton::colorFromInt(settings.value("pixelColorOn", 0xffffff).toInt());
+    auto offColor = ColorToolButton::colorFromInt(settings.value("pixelColorOff", 0x000000).toInt());
+    int iconSize = settings.value("iconSize", 64).toInt();
+    QPixmap pix(iconSize, iconSize);
     QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
+    paint.fillRect(0, 0, iconSize, iconSize, gridColor);
     for(int x = 0; x < dataSize.width(); x++)
         for(int y = 0; y < dataSize.height(); y++)
         {
-            const int xsize = imageSize / dataSize.width();
-            const int ysize = imageSize / dataSize.height();
-            constexpr int margin = imageSize / 16;
+            int xsize = iconSize / dataSize.width();
+            int ysize = iconSize / dataSize.height();
+            int margin = iconSize / 16;
             int xpos = x * xsize + margin / 2;
             int ypos = y * ysize + margin / 2;
             QColor color = (digits[x] >> (dataSize.height() - 1 - y)) & 0x1 ? onColor : offColor;
@@ -101,9 +102,15 @@ QIcon generate4x3IconFromDate(struct tm * tm) {
 }
 
 QIcon generate5minIconFromTime(struct tm * tm) {
-    QPixmap pix(imageSize, imageSize);
+    QSettings settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat);
+    settings.beginGroup("Preferences");
+    auto gridColor = ColorToolButton::colorFromInt(settings.value("pixelColorBackground", 0x505050).toInt());
+    auto onColor = ColorToolButton::colorFromInt(settings.value("pixelColorOn", 0xffffff).toInt());
+    auto offColor = ColorToolButton::colorFromInt(settings.value("pixelColorOff", 0x000000).toInt());
+    int iconSize = settings.value("iconSize", 64).toInt();
+    QPixmap pix(iconSize, iconSize);
     QPainter paint(&pix);
-    paint.fillRect(0, 0, imageSize, imageSize, gridColor);
+    paint.fillRect(0, 0, iconSize, iconSize, gridColor);
 
     int digits[4];
     constexpr int sizes[4] = {2, 3, 2, 2};
@@ -115,10 +122,10 @@ QIcon generate5minIconFromTime(struct tm * tm) {
     for(int x = 0; x < 4; x++) {
         for(int y = 0; y < sizes[x]; y++)
         {
-            constexpr int xsize = imageSize / 4;
-            int ysize = imageSize / sizes[x];
-            constexpr int xmargin = imageSize / 16;
-            constexpr int ymargin = imageSize / 8;
+            int xsize = iconSize / 4;
+            int ysize = iconSize / sizes[x];
+            int xmargin = iconSize / 16;
+            int ymargin = iconSize / 8;
             int xpos = x * xsize + xmargin / 2;
             int ypos = y * ysize + ymargin / sizes[x];
             QColor color = (digits[x] >> (sizes[x] - 1 - y)) & 0x1 ? onColor : offColor;
@@ -150,7 +157,6 @@ HiddenWindow::HiddenWindow(QWidget *parent):
     trayIcon(new QSystemTrayIcon(this))
 {
     ui->setupUi(this);
-    loadSettings();
     auto trayIconMenu = new QMenu(this);
 
     for(int i = 0; i < std::size(settingNames); i++)
@@ -264,6 +270,8 @@ void HiddenWindow::saveSettings()
         settings.setValue(child->objectName(), child->value());
     for(auto child: findChildren<QTabWidget*>())
         settings.setValue(child->objectName(), child->currentIndex());
+    for(auto child: findChildren<ColorToolButton*>())
+        settings.setValue(child->objectName(), child->value());
     settings.endGroup();
 }
 
@@ -292,13 +300,22 @@ void HiddenWindow::loadSettings()
             child->setValue(settings.value(child->objectName(), 0).toDouble());
         for(auto child: findChildren<QTabWidget*>())
             child->setCurrentIndex(settings.value(child->objectName(), 0).toInt());
+        for(auto child: findChildren<ColorToolButton*>())
+            child->setValue(settings.value(child->objectName(), 0).toInt());
     }
     settings.endGroup();
+}
+
+void HiddenWindow::showEvent(QShowEvent *event)
+{
+    loadSettings();
+    QMainWindow::showEvent(event);
 }
 
 void HiddenWindow::hideEvent(QHideEvent *event)
 {
     qDebug() << __func__;
     saveSettings();
+    updateTrayIcon("colors");
     QMainWindow::hideEvent(event);
 }

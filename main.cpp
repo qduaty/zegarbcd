@@ -6,11 +6,11 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
+    app.setQuitOnLastWindowClosed(false);
     HiddenWindow w;
     if (QSystemTrayIcon::isSystemTrayAvailable())
     {
-        w.setWindowFlags(Qt::Popup);
+        // w.setWindowFlags(Qt::Popup);
     }
     else
     {

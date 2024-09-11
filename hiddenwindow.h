@@ -29,6 +29,7 @@ private:
     void iconActivated(QSystemTrayIcon::ActivationReason reason);
     void saveSettings();
     void loadSettings();
+    void showEvent(QShowEvent *event) override;
     void hideEvent(QHideEvent *event) override;
     QSystemTrayIcon* trayIcon;
     QTimer timer;
