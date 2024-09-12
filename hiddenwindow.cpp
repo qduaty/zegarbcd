@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QSlider>
 #include <QWindow>
+#include <QSpinBox>
 
 class SessionEventFilter : public QAbstractNativeEventFilter {
 public:
@@ -34,8 +35,6 @@ public:
     boost::signals2::signal<void(QString)> event;
 };
 
-constexpr size_t imageSize = 64;
-
 QIcon generateIcon(int* digits, QSize dataSize)
 {
     QSettings settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat);
@@ -43,7 +42,7 @@ QIcon generateIcon(int* digits, QSize dataSize)
     auto gridColor = ColorToolButton::colorFromInt(settings.value("pixelColorBackground", 0x505050).toInt());
     auto onColor = ColorToolButton::colorFromInt(settings.value("pixelColorOn", 0xffffff).toInt());
     auto offColor = ColorToolButton::colorFromInt(settings.value("pixelColorOff", 0x000000).toInt());
-    int iconSize = settings.value("iconSize", 64).toInt();
+    int iconSize = settings.value("iconSize", 256).toInt();
     QPixmap pix(iconSize, iconSize);
     QPainter paint(&pix);
     paint.fillRect(0, 0, iconSize, iconSize, gridColor);
