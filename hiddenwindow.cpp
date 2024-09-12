@@ -100,6 +100,16 @@ QIcon generate4x3IconFromDate(struct tm * tm) {
     return generateIcon(digits, {3, 4});
 }
 
+/// weekday (top row: 1-7); monthday (vert + top to right, 1-31); month (bottom right square, 1-12)
+QIcon generate4x3IconFromDate2(struct tm * tm) {
+    int digits[3];
+    digits[0] = tm->tm_mon + 1;
+    digits[1] = tm->tm_mday & 0b1111;
+    digits[2] = (tm->tm_wday & 0b111) | ((tm->tm_mday & 0b1000) >> 1);
+    for(int i=0;i<3;i++)qDebug()<<digits[i];
+    return generateIcon(digits, {3, 4});
+}
+
 QIcon generate5minIconFromTime(struct tm * tm) {
     QSettings settings("HKEY_CURRENT_USER\\Software\\qduaty\\zegarbcd", QSettings::NativeFormat);
     settings.beginGroup("Preferences");
@@ -199,7 +209,7 @@ void HiddenWindow::updateTrayIcon(QString reason) {
         auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         auto tm = std::localtime(&now);
         qDebug() << tm->tm_hour << tm->tm_min << tm->tm_sec << "updating icon: " << reason;
-        auto iconGenerator = displayDate ? generate4x3IconFromDate : iconGenerators[static_cast<int>(currentMode)];
+        auto iconGenerator = displayDate ? generate4x3IconFromDate2 : iconGenerators[static_cast<int>(currentMode)];
         trayIcon->setIcon(iconGenerator(tm));
         trayIcon->setToolTip(QLocale().toString(QDate::currentDate(), "dddd d MMMM yyyy"));
         trayIcon->show();
