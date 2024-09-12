@@ -23,9 +23,9 @@ The top row means hours since 1/3 day (7), the 3 columns below mean: 1/3 of day 
 ![obraz](https://github.com/user-attachments/assets/6c44a794-dbb2-451f-bd8d-5cd7948a0db9)
 
 ## Experimental date for fun
-Date can be seen by single clicking on the icon and lasts for 5 seconds. The date on screenshot is Monday, 9.09.
+Date can be seen by single clicking on the icon and lasts for 5 seconds. The date on screenshot is 9/12, Thursday.
 
-![date representation](https://github.com/user-attachments/assets/f44a3339-2ee6-4301-9b40-5d1a6ade1dc3)
+![obraz](https://github.com/user-attachments/assets/9a0eee28-a8a2-4e6d-9842-2e16f7f83502)
 
 # Prerequisities
 - boost (set the location in CmakeLists.txt)
