@@ -29,6 +29,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         hiddenwindow.cpp
         hiddenwindow.h
         colortoolbutton.h colortoolbutton.cpp
+        generators.cpp
+        generators.h
 
 
 

@@ -35,7 +35,9 @@ private:
     QTimer timer;
     QSettings settings, settingsRunOnStartup;
 
-signals:
+private slots:
+    void onColorChanged(QColor newValue);
+
 };
 
 #endif // HIDDENWINDOW_H
