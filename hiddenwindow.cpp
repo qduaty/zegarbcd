@@ -94,7 +94,7 @@ void HiddenWindow::updateTrayIcon(QString reason) {
         qDebug() << tm->tm_hour << tm->tm_min << tm->tm_sec << "updating icon: " << reason;
         auto iconGenerator = displayDate ? generate4x3IconFromDate2 : iconGenerators[static_cast<int>(currentMode)];
         trayIcon->setIcon(iconGenerator(tm));
-        trayIcon->setToolTip(QLocale().toString(QDate::currentDate(), "dddd d MMMM yyyy"));
+        trayIcon->setToolTip(QLocale().toString(QDate::currentDate(), "dddd d MMMM yyyy") + QTime::currentTime().toString(", hh:mm"));
         trayIcon->show();
         if(displayDate && timer.remainingTime() > 6000)
             timer.setInterval(6000);
