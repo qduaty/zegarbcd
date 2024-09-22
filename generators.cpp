@@ -72,7 +72,9 @@ QIcon generate4x3IconFromDate2(tm *tm) {
     int digits[3];
     digits[0] = tm->tm_mon + 1;
     digits[1] = tm->tm_mday & 0b1111;
-    digits[2] = (tm->tm_wday & 0b111) | ((tm->tm_mday & 0b1000) >> 1);
+    int wday = tm->tm_wday;
+    if(wday == 0) wday = 7;
+    digits[2] = wday | ((tm->tm_mday & 0b10000) >> 1);
     // for(int i=0;i<3;i++)qDebug()<<digits[i];
     return generateIcon(digits, {3, 4});
 }

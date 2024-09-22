@@ -31,6 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         colortoolbutton.h colortoolbutton.cpp
         generators.cpp
         generators.h
+        README.md
 
 
 
